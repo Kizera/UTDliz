@@ -1,11 +1,12 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
--- สร้างหน้าต่าง
 local Window = Fluent:CreateWindow({
-    Title = "Liz Hub v1.9",
-    SubTitle = "Event Loop (No Stop)",
+    Title = "Liz Hub v1.9.3",
+    SubTitle = "Added Skill 734",
     TabWidth = 160,
-    Size = UDim2.fromOffset(480, 320),
+    Size = UDim2.fromOffset(500, 350),
     Acrylic = true,
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.RightControl
@@ -22,20 +23,20 @@ local LocalPlayer = Players.LocalPlayer
 local GlobalInit = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("GlobalInit"):WaitForChild("RemoteEvents")
 local GenericService = ReplicatedStorage:WaitForChild("GenericModules"):WaitForChild("Service"):WaitForChild("Network")
 
--- Config
+-- Variables
 local Config = {
     AutoFarm = false
 }
 
 local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "home" })
+    Main = Window:AddTab({ Title = "Main", Icon = "home" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
 -- =========================================================
 -- FUNCTIONS
 -- =========================================================
 
--- 1. Anti-AFK
 local function ActivateAntiAFK()
     LocalPlayer.Idled:Connect(function()
         if Config.AutoFarm then
@@ -45,7 +46,6 @@ local function ActivateAntiAFK()
     end)
 end
 
--- 2. เช็ค Lobby และวาร์ป
 local function CheckAndTeleportLobby()
     local success, result = pcall(function()
         local lobby = Workspace:FindFirstChild("Lobby")
@@ -68,86 +68,61 @@ local function CheckAndTeleportLobby()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             LocalPlayer.Character.HumanoidRootPart.CFrame = result.CFrame * CFrame.new(0, 2, 0)
         end
-        return true -- อยู่ Lobby
+        return true
     end
-    return false -- อยู่ในเกม
+    return false
 end
 
--- 3. ฟังก์ชันรัน Macro (ใส่ pcall ครอบทุกอัน กัน Error เวลาวางซ้ำ)
+-- ฟังก์ชันแยกสำหรับ Rimuru Extra
+local function SetupRimuruExtra()
+    -- Skill 1 Rimuru (317)
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("317") end)
+    task.wait(0.5)
+    -- Auto Skill 1 Rimuru (317)
+    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("317") end)
+    task.wait(0.5)
+end
+
 local function RunGameMacro()
-    -- ใช้ pcall เพื่อให้สคริปต์ไม่หยุดทำงานถ้ากดไม่ติด (เช่น วางไปแล้ว หรือเกมยังไม่เริ่ม)
-    pcall(function()
-        -- A. Start & Speed
-        GlobalInit.PlayerVoteToStartMatch:FireServer()
-        GlobalInit.ClientRequestGameSpeed:FireServer("2")
+    -- 1. Start & Speed
+    pcall(function() GlobalInit.PlayerVoteToStartMatch:FireServer(); GlobalInit.ClientRequestGameSpeed:FireServer("2") end)
+    task.wait(0.5)
+
+    -- 2. Place Units (วางตัว)
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47887", Vector3.new(-122.46633911132812, -89.5013198852539, -166.22335815429688), 0) end) -- Emi
+    task.wait(0.5)
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("1") end) -- Skill Emi
+    task.wait(0.5)
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(-127.08798217773438, -84.87644958496094, -169.44821166992188)) end) -- Green
+    task.wait(0.5)
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:10912", Vector3.new(-127.08477783203125, -84.85888671875, -169.41062927246094)) end) -- Red
+    task.wait(0.5)
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40443", Vector3.new(-116.59783935546875, -89.5013198852539, -169.4457244873047), 0) end) -- Diablo
+    task.wait(0.5)
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47563", Vector3.new(-127.29544830322266, -81.75892639160156, -124.44894409179688), 0) end) -- Rimuru
+    task.wait(0.5)
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40346", Vector3.new(-126.35122680664062, -81.75898742675781, -147.71588134765625), 0) end) -- Ori
+    task.wait(0.5)
+
+    -- [NEW] Skill 734 (กดหลังจากวางตัวครบ)
+    pcall(function() 
+        GlobalInit.PlayerActivateTowerAbility:FireServer("734") 
     end)
     task.wait(0.5)
 
-    pcall(function()
-        -- B. Place Units (เรียงตามลำดับ)
-        -- Emi
-        GenericService.PlayerPlaceTower:FireServer("162743126:47887", Vector3.new(-122.46633911132812, -89.5013198852539, -166.22335815429688), 0)
-    end)
+    -- 3. Setups (Skills & Auto)
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("258") end) -- Skill Rim 258
+    task.wait(0.5)
+    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("1") end) -- Auto Emi
+    task.wait(0.5)
+    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("258") end) -- Auto Rim 258
     task.wait(0.5)
 
-    pcall(function()
-        -- Skill Emi
-        GlobalInit.PlayerActivateTowerAbility:FireServer("1")
-    end)
-    task.wait(0.5)
+    -- 4. Setups (Rimuru Extra)
+    SetupRimuruExtra()
 
-    pcall(function()
-        -- Green
-        GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(-127.08798217773438, -84.87644958496094, -169.44821166992188))
-    end)
-    task.wait(0.5)
-
-    pcall(function()
-        -- Red
-        GenericService.PlayerPlaceTower:FireServer("162743126:10912", Vector3.new(-127.08477783203125, -84.85888671875, -169.41062927246094))
-    end)
-    task.wait(0.5)
-
-    pcall(function()
-        -- Diablo
-        GenericService.PlayerPlaceTower:FireServer("162743126:40443", Vector3.new(-116.59783935546875, -89.5013198852539, -169.4457244873047), 0)
-    end)
-    task.wait(0.5)
-
-    pcall(function()
-        -- Rimuru
-        GenericService.PlayerPlaceTower:FireServer("162743126:47563", Vector3.new(-127.29544830322266, -81.75892639160156, -124.44894409179688), 0)
-    end)
-    task.wait(0.5)
-
-    pcall(function()
-        -- Ori
-        GenericService.PlayerPlaceTower:FireServer("162743126:40346", Vector3.new(-126.35122680664062, -81.75898742675781, -147.71588134765625), 0)
-    end)
-    task.wait(0.5)
-
-    pcall(function()
-        -- Skill Rimuru
-        GlobalInit.PlayerActivateTowerAbility:FireServer("258")
-    end)
-    task.wait(0.5)
-
-    pcall(function()
-        -- Auto Emi
-        GlobalInit.PlayerToggleAutoAbility:FireServer("1")
-    end)
-    task.wait(0.5)
-
-    pcall(function()
-        -- Auto Rimuru
-        GlobalInit.PlayerToggleAutoAbility:FireServer("258")
-    end)
-    task.wait(0.5)
-
-    pcall(function()
-        -- C. Replay (ถ้าเกมจบจะกดติด ถ้าไม่จบก็แค่ส่งไปเฉยๆ)
-        GlobalInit.PlayerVoteReplay:FireServer()
-    end)
+    -- 5. Replay
+    pcall(function() GlobalInit.PlayerVoteReplay:FireServer() end)
     task.wait(0.5)
 end
 
@@ -157,22 +132,14 @@ end
 
 task.spawn(function()
     ActivateAntiAFK()
-    
     while true do
         if Config.AutoFarm then
             local inLobby = CheckAndTeleportLobby()
-            
             if inLobby then
-                -- อยู่ Lobby: รอวาร์ปอย่างเดียว
                 task.wait(1)
             else
-                -- อยู่ในเกม: รันมาโครวนไปเรื่อยๆ
-                -- ถ้าวางไปแล้ว เกมจะ Error (แดงใน F9) แต่สคริปต์ไม่หยุด (เพราะมี pcall)
-                -- พอ Replay ปุ๊บ แมพหาย ตัวหาย -> สคริปต์ก็จะวางใหม่ได้ทันที
                 RunGameMacro()
-                
-                -- หน่วงเวลาลูปใหญ่นิดนึง (กันเซิร์ฟแลค)
-                task.wait(2) 
+                task.wait(2)
             end
         else
             task.wait(1)
@@ -182,21 +149,31 @@ task.spawn(function()
 end)
 
 -- =========================================================
--- UI
+-- UI SETUP
 -- =========================================================
 
 Tabs.Main:AddToggle("AutoFarmToggle", {
-    Title = "Auto Farm (Infinite Loop)",
-    Description = "Lobby -> Place -> Replay -> Repeat",
+    Title = "Auto Farm (Event Macro)",
+    Description = "Loop: Lobby -> Place -> Replay",
     Default = false,
     Callback = function(Value)
         Config.AutoFarm = Value
     end
 })
 
+-- SaveManager
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
+SaveManager:BuildConfigSection(Tabs.Settings)
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+
 Window:SelectTab(1)
+SaveManager:LoadAutoloadConfig()
+
 Fluent:Notify({
-    Title = "Liz Hub v1.9",
-    Content = "Loop Mode Ready! Good Night zZZ",
+    Title = "Liz Hub v1.9.3",
+    Content = "Skill 734 Added!",
     Duration = 5
 })
