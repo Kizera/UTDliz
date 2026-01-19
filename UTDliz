@@ -1,0 +1,202 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+
+-- สร้างหน้าต่าง
+local Window = Fluent:CreateWindow({
+    Title = "Liz Hub v1.9",
+    SubTitle = "Event Loop (No Stop)",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(480, 320),
+    Acrylic = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl
+})
+
+-- Services
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local LocalPlayer = Players.LocalPlayer
+
+-- Remote Paths
+local GlobalInit = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("GlobalInit"):WaitForChild("RemoteEvents")
+local GenericService = ReplicatedStorage:WaitForChild("GenericModules"):WaitForChild("Service"):WaitForChild("Network")
+
+-- Config
+local Config = {
+    AutoFarm = false
+}
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "home" })
+}
+
+-- =========================================================
+-- FUNCTIONS
+-- =========================================================
+
+-- 1. Anti-AFK
+local function ActivateAntiAFK()
+    LocalPlayer.Idled:Connect(function()
+        if Config.AutoFarm then
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+        end
+    end)
+end
+
+-- 2. เช็ค Lobby และวาร์ป
+local function CheckAndTeleportLobby()
+    local success, result = pcall(function()
+        local lobby = Workspace:FindFirstChild("Lobby")
+        if lobby then
+            local xmas = lobby:FindFirstChild("ChristmasEventLobby")
+            if xmas then
+                local tps = xmas:FindFirstChild("EventTeleporters")
+                if tps then
+                    local children = tps:GetChildren()
+                    if children[5] and children[5]:FindFirstChild("DisplayPart") then
+                        return children[5].DisplayPart
+                    end
+                end
+            end
+        end
+        return nil
+    end)
+
+    if success and result then
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = result.CFrame * CFrame.new(0, 2, 0)
+        end
+        return true -- อยู่ Lobby
+    end
+    return false -- อยู่ในเกม
+end
+
+-- 3. ฟังก์ชันรัน Macro (ใส่ pcall ครอบทุกอัน กัน Error เวลาวางซ้ำ)
+local function RunGameMacro()
+    -- ใช้ pcall เพื่อให้สคริปต์ไม่หยุดทำงานถ้ากดไม่ติด (เช่น วางไปแล้ว หรือเกมยังไม่เริ่ม)
+    pcall(function()
+        -- A. Start & Speed
+        GlobalInit.PlayerVoteToStartMatch:FireServer()
+        GlobalInit.ClientRequestGameSpeed:FireServer("2")
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- B. Place Units (เรียงตามลำดับ)
+        -- Emi
+        GenericService.PlayerPlaceTower:FireServer("162743126:47887", Vector3.new(-122.46633911132812, -89.5013198852539, -166.22335815429688), 0)
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Skill Emi
+        GlobalInit.PlayerActivateTowerAbility:FireServer("1")
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Green
+        GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(-127.08798217773438, -84.87644958496094, -169.44821166992188))
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Red
+        GenericService.PlayerPlaceTower:FireServer("162743126:10912", Vector3.new(-127.08477783203125, -84.85888671875, -169.41062927246094))
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Diablo
+        GenericService.PlayerPlaceTower:FireServer("162743126:40443", Vector3.new(-116.59783935546875, -89.5013198852539, -169.4457244873047), 0)
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Rimuru
+        GenericService.PlayerPlaceTower:FireServer("162743126:47563", Vector3.new(-127.29544830322266, -81.75892639160156, -124.44894409179688), 0)
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Ori
+        GenericService.PlayerPlaceTower:FireServer("162743126:40346", Vector3.new(-126.35122680664062, -81.75898742675781, -147.71588134765625), 0)
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Skill Rimuru
+        GlobalInit.PlayerActivateTowerAbility:FireServer("258")
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Auto Emi
+        GlobalInit.PlayerToggleAutoAbility:FireServer("1")
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- Auto Rimuru
+        GlobalInit.PlayerToggleAutoAbility:FireServer("258")
+    end)
+    task.wait(0.5)
+
+    pcall(function()
+        -- C. Replay (ถ้าเกมจบจะกดติด ถ้าไม่จบก็แค่ส่งไปเฉยๆ)
+        GlobalInit.PlayerVoteReplay:FireServer()
+    end)
+    task.wait(0.5)
+end
+
+-- =========================================================
+-- MAIN LOOP
+-- =========================================================
+
+task.spawn(function()
+    ActivateAntiAFK()
+    
+    while true do
+        if Config.AutoFarm then
+            local inLobby = CheckAndTeleportLobby()
+            
+            if inLobby then
+                -- อยู่ Lobby: รอวาร์ปอย่างเดียว
+                task.wait(1)
+            else
+                -- อยู่ในเกม: รันมาโครวนไปเรื่อยๆ
+                -- ถ้าวางไปแล้ว เกมจะ Error (แดงใน F9) แต่สคริปต์ไม่หยุด (เพราะมี pcall)
+                -- พอ Replay ปุ๊บ แมพหาย ตัวหาย -> สคริปต์ก็จะวางใหม่ได้ทันที
+                RunGameMacro()
+                
+                -- หน่วงเวลาลูปใหญ่นิดนึง (กันเซิร์ฟแลค)
+                task.wait(2) 
+            end
+        else
+            task.wait(1)
+        end
+        task.wait()
+    end
+end)
+
+-- =========================================================
+-- UI
+-- =========================================================
+
+Tabs.Main:AddToggle("AutoFarmToggle", {
+    Title = "Auto Farm (Infinite Loop)",
+    Description = "Lobby -> Place -> Replay -> Repeat",
+    Default = false,
+    Callback = function(Value)
+        Config.AutoFarm = Value
+    end
+})
+
+Window:SelectTab(1)
+Fluent:Notify({
+    Title = "Liz Hub v1.9",
+    Content = "Loop Mode Ready! Good Night zZZ",
+    Duration = 5
+})
