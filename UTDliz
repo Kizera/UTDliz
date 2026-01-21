@@ -3,10 +3,10 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/d
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Liz Hub v2.3 (Full)",
-    SubTitle = "Event + ULQ + Skills",
+    Title = "Liz Hub v2.4",
+    SubTitle = "Auto Eishu Added",
     TabWidth = 160,
-    Size = UDim2.fromOffset(500, 450),
+    Size = UDim2.fromOffset(500, 500),
     Acrylic = true,
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.RightControl
@@ -25,9 +25,10 @@ local GenericService = ReplicatedStorage:WaitForChild("GenericModules"):WaitForC
 
 -- Variables
 local Config = {
-    AutoFarm = false, -- Event
-    AutoULQ = false,  -- ULQ
-    AutoSkill = false -- Skills Only
+    AutoFarm = false,  -- Event
+    AutoULQ = false,   -- ULQ
+    AutoEishu = false, -- Eishu (New!)
+    AutoSkill = false  -- Skills Only
 }
 
 local Tabs = {
@@ -41,7 +42,7 @@ local Tabs = {
 
 local function ActivateAntiAFK()
     LocalPlayer.Idled:Connect(function()
-        if Config.AutoFarm or Config.AutoULQ or Config.AutoSkill then
+        if Config.AutoFarm or Config.AutoULQ or Config.AutoEishu or Config.AutoSkill then
             VirtualUser:CaptureController()
             VirtualUser:ClickButton2(Vector2.new())
         end
@@ -130,7 +131,7 @@ local function RunEventMacro()
     task.wait(0.5)
 end
 
--- [[ AUTO ULQ ]]
+-- [[ AUTO ULQ (Las Noches) ]]
 local function SetupULQLobby()
     pcall(function()
         local pad = Workspace.Lobby.ClassicPartyTeleporters.Teleporter1["Cylinder.119"]
@@ -142,15 +143,76 @@ local function SetupULQLobby()
 
     pcall(function() GlobalInit.PlayerSelectedMap:FireServer("LasNoches") end)
     task.wait(0.5)
-
     pcall(function() GlobalInit.PlayerSelectedGamemode:FireServer("Hard") end)
     task.wait(0.5)
-
     pcall(function() GlobalInit.PlayerQuickstartTeleport:FireServer() end)
     task.wait(5)
 end
 
 local function RunULQMacro()
+    -- Vote Start & Speed
+    pcall(function() GlobalInit.PlayerVoteToStartMatch:FireServer() end)
+    task.wait(0.5)
+    pcall(function() GlobalInit.ClientRequestGameSpeed:FireServer("2") end)
+    task.wait(0.5)
+    
+    -- Place Units
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38673", Vector3.new(341.5517883300781, -86.82218933105469, -254.89566040039062), 0) end)
+    task.wait(0.5) -- Yuji
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(351.333251953125, -86.82218933105469, -253.70635986328125), 0) end)
+    task.wait(0.5) -- Cyborg 1
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(98.34255981445312, -82.40069580078125, -240.23922729492188)) end)
+    task.wait(0.5) -- Red Dragon
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47563", Vector3.new(112.66893005371094, -86.78361511230469, -228.43304443359375), 0) end)
+    task.wait(0.5) -- Rimuru
+    
+    -- Rim Skill
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("587") end)
+    task.wait(0.5)
+
+    -- Place More
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40443", Vector3.new(-115.6803207397461, -86.82218933105469, -243.2405242919922), 0) end)
+    task.wait(0.5) -- Diablo
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(-144.4224853515625, -86.783203125, -229.0474853515625), 0) end)
+    task.wait(0.5) -- Cyborg 2
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(89.17323303222656, -86.81849670410156, -378.3101501464844), 0) end)
+    task.wait(0.5) -- Cyborg 3
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(99.2353744506836, -86.8182373046875, -378.68682861328125), 0) end)
+    task.wait(0.5) -- Cyborg 4
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(94.30243682861328, -86.81970977783203, -376.5411071777344), 0) end)
+    task.wait(0.5) -- Cyborg 5
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40287", Vector3.new(94.88094329833984, -86.83952331542969, -347.60491943359375), 0) end)
+    task.wait(0.5) -- Denji
+    
+    -- Denji Skill
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("536") end)
+    task.wait(0.5)
+
+    -- Replay
+    pcall(function() GlobalInit.PlayerVoteReplay:FireServer() end)
+    task.wait(0.5)
+end
+
+-- [[ AUTO EISHU (New!) ]]
+local function SetupEishuLobby()
+    pcall(function()
+        -- ใช้ Teleporter1 เหมือน ULQ เป็นจุดยืน
+        local pad = Workspace.Lobby.ClassicPartyTeleporters.Teleporter1["Cylinder.119"]
+        if pad and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = pad.CFrame * CFrame.new(0, 3, 0)
+        end
+    end)
+    task.wait(1)
+
+    pcall(function() GlobalInit.PlayerSelectedMap:FireServer("EishuDetention") end)
+    task.wait(0.5)
+    pcall(function() GlobalInit.PlayerSelectedGamemode:FireServer("Hard") end)
+    task.wait(0.5)
+    pcall(function() GlobalInit.PlayerQuickstartTeleport:FireServer() end)
+    task.wait(5)
+end
+
+local function RunEishuMacro()
     -- Vote Start
     pcall(function() GlobalInit.PlayerVoteToStartMatch:FireServer() end)
     task.wait(0.5)
@@ -158,53 +220,21 @@ local function RunULQMacro()
     -- Speed
     pcall(function() GlobalInit.ClientRequestGameSpeed:FireServer("2") end)
     task.wait(0.5)
-    
+
     -- Yuji
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38673", Vector3.new(341.5517883300781, -86.82218933105469, -254.89566040039062), 0) end)
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38673", Vector3.new(-32.73920440673828, 10, -807.3576049804688), 0) end)
     task.wait(0.5)
 
-    -- Cyborg 1
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(351.333251953125, -86.82218933105469, -253.70635986328125), 0) end)
+    -- Green
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:4107", Vector3.new(-27.423828125, 14.668939590454102, -809.2131958007812)) end)
     task.wait(0.5)
 
-    -- Red Dragon
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(98.34255981445312, -82.40069580078125, -240.23922729492188)) end)
+    -- Red
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(-27.340288162231445, 14.630115509033203, -809.2195434570312)) end)
     task.wait(0.5)
 
-    -- Rimuru
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47563", Vector3.new(112.66893005371094, -86.78361511230469, -228.43304443359375), 0) end)
-    task.wait(0.5)
-    
-    -- Rim Skill
-    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("587") end)
-    task.wait(0.5)
-
-    -- Diablo
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40443", Vector3.new(-115.6803207397461, -86.82218933105469, -243.2405242919922), 0) end)
-    task.wait(0.5)
-
-    -- Cyborg 2
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(-144.4224853515625, -86.783203125, -229.0474853515625), 0) end)
-    task.wait(0.5)
-
-    -- Cyborg 3
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(89.17323303222656, -86.81849670410156, -378.3101501464844), 0) end)
-    task.wait(0.5)
-
-    -- Cyborg 4
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(99.2353744506836, -86.8182373046875, -378.68682861328125), 0) end)
-    task.wait(0.5)
-
-    -- Cyborg 5
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(94.30243682861328, -86.81970977783203, -376.5411071777344), 0) end)
-    task.wait(0.5)
-
-    -- Denji
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40287", Vector3.new(94.88094329833984, -86.83952331542969, -347.60491943359375), 0) end)
-    task.wait(0.5)
-    
-    -- Denji Skill
-    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("536") end)
+    -- Golden
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:10912", Vector3.new(-27.400672912597656, 14.658205032348633, -809.2149658203125)) end)
     task.wait(0.5)
 
     -- Replay
@@ -221,37 +251,33 @@ task.spawn(function()
     while true do
         -- 1. EVENT
         if Config.AutoFarm then
-            if IsInLobby() then
-                CheckAndTeleportEventLobby()
-                task.wait(1)
-            else
-                RunEventMacro()
-                task.wait(2)
-            end
+            if IsInLobby() then CheckAndTeleportEventLobby(); task.wait(1)
+            else RunEventMacro(); task.wait(2) end
             
         -- 2. ULQ
         elseif Config.AutoULQ then
-            if IsInLobby() then
-                SetupULQLobby()
-            else
-                RunULQMacro()
-                task.wait(2)
-            end
+            if IsInLobby() then SetupULQLobby()
+            else RunULQMacro(); task.wait(2) end
+
+        -- 3. EISHU
+        elseif Config.AutoEishu then
+            if IsInLobby() then SetupEishuLobby()
+            else RunEishuMacro(); task.wait(2) end
         end
         
         task.wait(0.5)
     end
 end)
 
--- 3. AUTO SKILL (Standalone Loop)
+-- 4. AUTO SKILL
 task.spawn(function()
     while true do
         if Config.AutoSkill then
-            pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("1601") end) -- Yuji
-            pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("536") end)  -- Denji
-            pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("587") end)  -- Rimuru 1
+            pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("1601") end)
+            pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("536") end)
+            pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("587") end)
         end
-        task.wait(1) -- Delay 1 วิ
+        task.wait(1)
     end
 end)
 
@@ -263,14 +289,30 @@ local SectionEvent = Tabs.Main:AddSection("Event Farm")
 Tabs.Main:AddToggle("AutoFarmToggle", {
     Title = "Auto Event (X-Mas)",
     Default = false,
-    Callback = function(V) Config.AutoFarm = V; if V then Config.AutoULQ = false end end
+    Callback = function(V) 
+        Config.AutoFarm = V
+        if V then Config.AutoULQ = false; Config.AutoEishu = false end 
+    end
 })
 
 local SectionULQ = Tabs.Main:AddSection("ULQ Farm")
 Tabs.Main:AddToggle("AutoULQToggle", {
     Title = "Auto ULQ (Las Noches)",
     Default = false,
-    Callback = function(V) Config.AutoULQ = V; if V then Config.AutoFarm = false end end
+    Callback = function(V) 
+        Config.AutoULQ = V
+        if V then Config.AutoFarm = false; Config.AutoEishu = false end 
+    end
+})
+
+local SectionEishu = Tabs.Main:AddSection("Eishu Farm")
+Tabs.Main:AddToggle("AutoEishuToggle", {
+    Title = "Auto Eishu (Detention)",
+    Default = false,
+    Callback = function(V) 
+        Config.AutoEishu = V
+        if V then Config.AutoFarm = false; Config.AutoULQ = false end 
+    end
 })
 
 local SectionSkill = Tabs.Main:AddSection("Skills Only")
@@ -293,7 +335,7 @@ Window:SelectTab(1)
 SaveManager:LoadAutoloadConfig()
 
 Fluent:Notify({
-    Title = "Liz Hub v2.3",
-    Content = "Full Code Loaded!",
+    Title = "Liz Hub v2.4",
+    Content = "Auto Eishu Ready!",
     Duration = 5
 })
