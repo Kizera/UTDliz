@@ -3,10 +3,10 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/d
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Liz Hub v1.9.3",
-    SubTitle = "Added Skill 734",
+    Title = "Liz Hub v2.0",
+    SubTitle = "Event & ULQ Added",
     TabWidth = 160,
-    Size = UDim2.fromOffset(500, 350),
+    Size = UDim2.fromOffset(500, 400),
     Acrylic = true,
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.RightControl
@@ -25,7 +25,8 @@ local GenericService = ReplicatedStorage:WaitForChild("GenericModules"):WaitForC
 
 -- Variables
 local Config = {
-    AutoFarm = false
+    AutoFarm = false, -- Event
+    AutoULQ = false   -- ULQ
 }
 
 local Tabs = {
@@ -39,14 +40,20 @@ local Tabs = {
 
 local function ActivateAntiAFK()
     LocalPlayer.Idled:Connect(function()
-        if Config.AutoFarm then
+        if Config.AutoFarm or Config.AutoULQ then
             VirtualUser:CaptureController()
             VirtualUser:ClickButton2(Vector2.new())
         end
     end)
 end
 
-local function CheckAndTeleportLobby()
+-- เช็คว่าอยู่ Lobby ไหม (ใช้ได้กับทั้ง 2 โหมด)
+local function IsInLobby()
+    return Workspace:FindFirstChild("Lobby") ~= nil
+end
+
+-- [[ EVENT: CHRISTMAS ]]
+local function CheckAndTeleportEventLobby()
     local success, result = pcall(function()
         local lobby = Workspace:FindFirstChild("Lobby")
         if lobby then
@@ -68,60 +75,88 @@ local function CheckAndTeleportLobby()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             LocalPlayer.Character.HumanoidRootPart.CFrame = result.CFrame * CFrame.new(0, 2, 0)
         end
-        return true
     end
-    return false
 end
 
--- ฟังก์ชันแยกสำหรับ Rimuru Extra
-local function SetupRimuruExtra()
-    -- Skill 1 Rimuru (317)
-    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("317") end)
-    task.wait(0.5)
-    -- Auto Skill 1 Rimuru (317)
-    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("317") end)
-    task.wait(0.5)
+local function RunEventMacro()
+    -- Macro เดิมของ Event
+    pcall(function() GlobalInit.PlayerVoteToStartMatch:FireServer(); GlobalInit.ClientRequestGameSpeed:FireServer("2") end); task.wait(0.5)
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47887", Vector3.new(-122.46633911132812, -89.5013198852539, -166.22335815429688), 0) end); task.wait(0.5) -- Emi
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("1") end); task.wait(0.5) -- Skill Emi
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(-127.08798217773438, -84.87644958496094, -169.44821166992188)) end); task.wait(0.5) -- Green
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:10912", Vector3.new(-127.08477783203125, -84.85888671875, -169.41062927246094)) end); task.wait(0.5) -- Red
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40443", Vector3.new(-116.59783935546875, -89.5013198852539, -169.4457244873047), 0) end); task.wait(0.5) -- Diablo
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47563", Vector3.new(-127.29544830322266, -81.75892639160156, -124.44894409179688), 0) end); task.wait(0.5) -- Rimuru
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40346", Vector3.new(-126.35122680664062, -81.75898742675781, -147.71588134765625), 0) end); task.wait(0.5) -- Ori
+    
+    -- Setups
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("258") end); task.wait(0.5)
+    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("1") end); task.wait(0.5)
+    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("258") end); task.wait(0.5)
+    
+    -- Rimuru Extra
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("317") end); task.wait(0.5)
+    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("317") end); task.wait(0.5)
+    
+    -- Replay
+    pcall(function() GlobalInit.PlayerVoteReplay:FireServer() end); task.wait(0.5)
 end
 
-local function RunGameMacro()
+-- [[ AUTO ULQ ]]
+local function RunULQMacro()
     -- 1. Start & Speed
     pcall(function() GlobalInit.PlayerVoteToStartMatch:FireServer(); GlobalInit.ClientRequestGameSpeed:FireServer("2") end)
     task.wait(0.5)
 
-    -- 2. Place Units (วางตัว)
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47887", Vector3.new(-122.46633911132812, -89.5013198852539, -166.22335815429688), 0) end) -- Emi
-    task.wait(0.5)
-    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("1") end) -- Skill Emi
-    task.wait(0.5)
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(-127.08798217773438, -84.87644958496094, -169.44821166992188)) end) -- Green
-    task.wait(0.5)
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:10912", Vector3.new(-127.08477783203125, -84.85888671875, -169.41062927246094)) end) -- Red
-    task.wait(0.5)
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40443", Vector3.new(-116.59783935546875, -89.5013198852539, -169.4457244873047), 0) end) -- Diablo
-    task.wait(0.5)
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47563", Vector3.new(-127.29544830322266, -81.75892639160156, -124.44894409179688), 0) end) -- Rimuru
-    task.wait(0.5)
-    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40346", Vector3.new(-126.35122680664062, -81.75898742675781, -147.71588134765625), 0) end) -- Ori
+    -- 2. Yuji
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38673", Vector3.new(341.5517883300781, -86.82218933105469, -254.89566040039062), 0) end)
     task.wait(0.5)
 
-    -- [NEW] Skill 734 (กดหลังจากวางตัวครบ)
-    pcall(function() 
-        GlobalInit.PlayerActivateTowerAbility:FireServer("734") 
-    end)
+    -- 3. Cyborg 1
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(351.333251953125, -86.82218933105469, -253.70635986328125), 0) end)
     task.wait(0.5)
 
-    -- 3. Setups (Skills & Auto)
-    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("258") end) -- Skill Rim 258
-    task.wait(0.5)
-    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("1") end) -- Auto Emi
-    task.wait(0.5)
-    pcall(function() GlobalInit.PlayerToggleAutoAbility:FireServer("258") end) -- Auto Rim 258
+    -- 4. Red Dragon
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:41308", Vector3.new(98.34255981445312, -82.40069580078125, -240.23922729492188)) end)
     task.wait(0.5)
 
-    -- 4. Setups (Rimuru Extra)
-    SetupRimuruExtra()
+    -- 5. Rimuru
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:47563", Vector3.new(112.66893005371094, -86.78361511230469, -228.43304443359375), 0) end)
+    task.wait(0.5)
 
-    -- 5. Replay
+    -- 6. Skill Rimuru (587)
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("587") end)
+    task.wait(0.5)
+
+    -- 7. Diablo
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40443", Vector3.new(-115.6803207397461, -86.82218933105469, -243.2405242919922), 0) end)
+    task.wait(0.5)
+
+    -- 8. Cyborg 2
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(-144.4224853515625, -86.783203125, -229.0474853515625), 0) end)
+    task.wait(0.5)
+
+    -- 9. Cyborg 3
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(89.17323303222656, -86.81849670410156, -378.3101501464844), 0) end)
+    task.wait(0.5)
+
+    -- 10. Cyborg 4
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(99.2353744506836, -86.8182373046875, -378.68682861328125), 0) end)
+    task.wait(0.5)
+
+    -- 11. Cyborg 5
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:38320", Vector3.new(94.30243682861328, -86.81970977783203, -376.5411071777344), 0) end)
+    task.wait(0.5)
+
+    -- 12. Denji
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:40287", Vector3.new(94.88094329833984, -86.83952331542969, -347.60491943359375), 0) end)
+    task.wait(0.5)
+
+    -- 13. Denji Skill (536)
+    pcall(function() GlobalInit.PlayerActivateTowerAbility:FireServer("536") end)
+    task.wait(0.5)
+
+    -- 14. Replay
     pcall(function() GlobalInit.PlayerVoteReplay:FireServer() end)
     task.wait(0.5)
 end
@@ -133,18 +168,30 @@ end
 task.spawn(function()
     ActivateAntiAFK()
     while true do
+        -- >>> MODE 1: EVENT FARM <<<
         if Config.AutoFarm then
-            local inLobby = CheckAndTeleportLobby()
-            if inLobby then
+            if IsInLobby() then
+                CheckAndTeleportEventLobby()
                 task.wait(1)
             else
-                RunGameMacro()
+                RunEventMacro()
                 task.wait(2)
             end
-        else
-            task.wait(1)
+            
+        -- >>> MODE 2: AUTO ULQ <<<
+        elseif Config.AutoULQ then
+            if IsInLobby() then
+                -- ถ้าอยู่ Lobby ให้กด Quickstart เพื่อเข้าเกม
+                pcall(function() GlobalInit.PlayerQuickstartTeleport:FireServer() end)
+                task.wait(5) -- รอโหลดเข้าเกม
+            else
+                -- อยู่ในเกม รัน Macro ULQ
+                RunULQMacro()
+                task.wait(2)
+            end
         end
-        task.wait()
+        
+        task.wait(0.5)
     end
 end)
 
@@ -152,12 +199,25 @@ end)
 -- UI SETUP
 -- =========================================================
 
+-- Toggle: Event Farm
 Tabs.Main:AddToggle("AutoFarmToggle", {
-    Title = "Auto Farm (Event Macro)",
-    Description = "Loop: Lobby -> Place -> Replay",
+    Title = "Auto Farm (X-Mas Event)",
+    Description = "Walks to Event Lobby -> Macro",
     Default = false,
     Callback = function(Value)
         Config.AutoFarm = Value
+        if Value then Config.AutoULQ = false end -- ปิด ULQ อัตโนมัติถ้าเปิดอันนี้
+    end
+})
+
+-- Toggle: Auto ULQ (New!)
+Tabs.Main:AddToggle("AutoULQToggle", {
+    Title = "Auto ULQ (Quickstart)",
+    Description = "Quickstart -> Yuji/Rimuru/Denji -> Replay",
+    Default = false,
+    Callback = function(Value)
+        Config.AutoULQ = Value
+        if Value then Config.AutoFarm = false end -- ปิด Event อัตโนมัติถ้าเปิดอันนี้
     end
 })
 
@@ -173,7 +233,7 @@ Window:SelectTab(1)
 SaveManager:LoadAutoloadConfig()
 
 Fluent:Notify({
-    Title = "Liz Hub v1.9.3",
-    Content = "Skill 734 Added!",
+    Title = "Liz Hub v2.0",
+    Content = "Auto ULQ Added!",
     Duration = 5
 })
