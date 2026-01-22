@@ -3,8 +3,8 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/d
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Liz Hub v2.4",
-    SubTitle = "Auto Eishu Added",
+    Title = "Liz Hub v2.5",
+    SubTitle = "Auto DGB (Gill) Added",
     TabWidth = 160,
     Size = UDim2.fromOffset(500, 500),
     Acrylic = true,
@@ -27,7 +27,8 @@ local GenericService = ReplicatedStorage:WaitForChild("GenericModules"):WaitForC
 local Config = {
     AutoFarm = false,  -- Event
     AutoULQ = false,   -- ULQ
-    AutoEishu = false, -- Eishu (New!)
+    AutoEishu = false, -- Eishu
+    AutoDGB = false,   -- DGB (New!)
     AutoSkill = false  -- Skills Only
 }
 
@@ -42,7 +43,7 @@ local Tabs = {
 
 local function ActivateAntiAFK()
     LocalPlayer.Idled:Connect(function()
-        if Config.AutoFarm or Config.AutoULQ or Config.AutoEishu or Config.AutoSkill then
+        if Config.AutoFarm or Config.AutoULQ or Config.AutoEishu or Config.AutoDGB or Config.AutoSkill then
             VirtualUser:CaptureController()
             VirtualUser:ClickButton2(Vector2.new())
         end
@@ -53,7 +54,7 @@ local function IsInLobby()
     return Workspace:FindFirstChild("Lobby") ~= nil
 end
 
--- [[ EVENT: CHRISTMAS ]]
+-- [[ 1. EVENT: CHRISTMAS ]]
 local function CheckAndTeleportEventLobby()
     local success, result = pcall(function()
         local lobby = Workspace:FindFirstChild("Lobby")
@@ -131,7 +132,7 @@ local function RunEventMacro()
     task.wait(0.5)
 end
 
--- [[ AUTO ULQ (Las Noches) ]]
+-- [[ 2. AUTO ULQ (Las Noches) ]]
 local function SetupULQLobby()
     pcall(function()
         local pad = Workspace.Lobby.ClassicPartyTeleporters.Teleporter1["Cylinder.119"]
@@ -150,7 +151,6 @@ local function SetupULQLobby()
 end
 
 local function RunULQMacro()
-    -- Vote Start & Speed
     pcall(function() GlobalInit.PlayerVoteToStartMatch:FireServer() end)
     task.wait(0.5)
     pcall(function() GlobalInit.ClientRequestGameSpeed:FireServer("2") end)
@@ -193,10 +193,9 @@ local function RunULQMacro()
     task.wait(0.5)
 end
 
--- [[ AUTO EISHU (New!) ]]
+-- [[ 3. AUTO EISHU (Detention) ]]
 local function SetupEishuLobby()
     pcall(function()
-        -- ใช้ Teleporter1 เหมือน ULQ เป็นจุดยืน
         local pad = Workspace.Lobby.ClassicPartyTeleporters.Teleporter1["Cylinder.119"]
         if pad and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             LocalPlayer.Character.HumanoidRootPart.CFrame = pad.CFrame * CFrame.new(0, 3, 0)
@@ -213,11 +212,8 @@ local function SetupEishuLobby()
 end
 
 local function RunEishuMacro()
-    -- Vote Start
     pcall(function() GlobalInit.PlayerVoteToStartMatch:FireServer() end)
     task.wait(0.5)
-
-    -- Speed
     pcall(function() GlobalInit.ClientRequestGameSpeed:FireServer("2") end)
     task.wait(0.5)
 
@@ -235,6 +231,42 @@ local function RunEishuMacro()
 
     -- Golden
     pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:10912", Vector3.new(-27.400672912597656, 14.658205032348633, -809.2149658203125)) end)
+    task.wait(0.5)
+
+    -- Replay
+    pcall(function() GlobalInit.PlayerVoteReplay:FireServer() end)
+    task.wait(0.5)
+end
+
+-- [[ 4. AUTO DGB (Planet Namek) ]] -- NEW!
+local function SetupDGBLobby()
+    pcall(function()
+        local pad = Workspace.Lobby.ClassicPartyTeleporters.Teleporter1["Cylinder.119"]
+        if pad and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = pad.CFrame * CFrame.new(0, 3, 0)
+        end
+    end)
+    task.wait(1)
+
+    pcall(function() GlobalInit.PlayerSelectedMap:FireServer("PlanetNamek") end)
+    task.wait(0.5)
+    pcall(function() GlobalInit.PlayerSelectedGamemode:FireServer("Hard") end)
+    task.wait(0.5)
+    pcall(function() GlobalInit.PlayerQuickstartTeleport:FireServer() end)
+    task.wait(5)
+end
+
+local function RunDGBMacro()
+    -- Vote Start
+    pcall(function() GlobalInit.PlayerVoteToStartMatch:FireServer() end)
+    task.wait(0.5)
+    
+    -- Speed
+    pcall(function() GlobalInit.ClientRequestGameSpeed:FireServer("2") end)
+    task.wait(0.5)
+
+    -- Gill
+    pcall(function() GenericService.PlayerPlaceTower:FireServer("162743126:39681", Vector3.new(-634.691162109375, 83.93650817871094, -343.5027160644531), 0) end)
     task.wait(0.5)
 
     -- Replay
@@ -263,13 +295,18 @@ task.spawn(function()
         elseif Config.AutoEishu then
             if IsInLobby() then SetupEishuLobby()
             else RunEishuMacro(); task.wait(2) end
+
+        -- 4. DGB
+        elseif Config.AutoDGB then
+            if IsInLobby() then SetupDGBLobby()
+            else RunDGBMacro(); task.wait(2) end
         end
         
         task.wait(0.5)
     end
 end)
 
--- 4. AUTO SKILL
+-- AUTO SKILL (Standalone)
 task.spawn(function()
     while true do
         if Config.AutoSkill then
@@ -291,7 +328,7 @@ Tabs.Main:AddToggle("AutoFarmToggle", {
     Default = false,
     Callback = function(V) 
         Config.AutoFarm = V
-        if V then Config.AutoULQ = false; Config.AutoEishu = false end 
+        if V then Config.AutoULQ = false; Config.AutoEishu = false; Config.AutoDGB = false end 
     end
 })
 
@@ -301,7 +338,7 @@ Tabs.Main:AddToggle("AutoULQToggle", {
     Default = false,
     Callback = function(V) 
         Config.AutoULQ = V
-        if V then Config.AutoFarm = false; Config.AutoEishu = false end 
+        if V then Config.AutoFarm = false; Config.AutoEishu = false; Config.AutoDGB = false end 
     end
 })
 
@@ -311,7 +348,18 @@ Tabs.Main:AddToggle("AutoEishuToggle", {
     Default = false,
     Callback = function(V) 
         Config.AutoEishu = V
-        if V then Config.AutoFarm = false; Config.AutoULQ = false end 
+        if V then Config.AutoFarm = false; Config.AutoULQ = false; Config.AutoDGB = false end 
+    end
+})
+
+local SectionDGB = Tabs.Main:AddSection("DGB Farm")
+Tabs.Main:AddToggle("AutoDGBToggle", {
+    Title = "Auto DGB (Planet Namek)",
+    Description = "Only Gill (Gill Farm)",
+    Default = false,
+    Callback = function(V) 
+        Config.AutoDGB = V
+        if V then Config.AutoFarm = false; Config.AutoULQ = false; Config.AutoEishu = false end 
     end
 })
 
@@ -335,7 +383,7 @@ Window:SelectTab(1)
 SaveManager:LoadAutoloadConfig()
 
 Fluent:Notify({
-    Title = "Liz Hub v2.4",
-    Content = "Auto Eishu Ready!",
+    Title = "Liz Hub v2.5",
+    Content = "Auto DGB Added!",
     Duration = 5
 })
